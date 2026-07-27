@@ -148,8 +148,16 @@
     exactMap.set(exact, objectUrl);
 
     const base = getBasename(exact);
-    if (base && !baseMap.has(base)) {
-      baseMap.set(base, objectUrl);
+
+    if (base) {
+      if (!baseMap.has(base)) {
+        baseMap.set(base, []);
+      }
+
+      baseMap.get(base).push({
+        path: exact,
+        url: objectUrl,
+      });
     }
 
     importedFiles.push({
@@ -185,10 +193,22 @@
     }
 
     const exact = normalizePath(pathname);
-    if (exact && exactMap.has(exact)) return exactMap.get(exact);
 
+    // Exact path match first
+    if (exact && exactMap.has(exact)) {
+      return exactMap.get(exact);
+    }
+
+    // Only use basename if it is unique
     const base = getBasename(exact);
-    if (base && baseMap.has(base)) return baseMap.get(base);
+
+    if (base && baseMap.has(base)) {
+      const matches = baseMap.get(base);
+
+      if (matches.length === 1) {
+        return matches[0].url;
+      }
+    }
 
     return "";
   }
