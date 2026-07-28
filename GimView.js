@@ -1,6 +1,6 @@
 /**
  * @name GimView
- * @description A plugin that allows you to make/import texture packs into Gimkit
+ * @description A plugin that allows you to make/import texture packs into Gimkit [ctrl+alt+g for menu, =/+ for dev menu]
  * @author Jdjd141414
  * @version 1.2.0
  */
@@ -781,9 +781,21 @@
     window.addEventListener("keydown", (event) => {
       if (isTypingTarget(document.activeElement)) return;
 
-      const key = String(event.key || "").toLowerCase();
+      // Ctrl + Alt + G toggles the main GimView panel
+      if (event.ctrlKey && event.altKey && event.code === "KeyG") {
+        const panel = document.getElementById(PANEL_ID);
+        if (!panel) return;
 
-      // "=" or "+" toggles dev mode
+        panelOpen = !panelOpen;
+        panel.style.display = panelOpen ? "block" : "none";
+
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      // Keep your dev-mode shortcut if you still want it
+      const key = String(event.key || "").toLowerCase();
       if (key === "=" || key === "+" || event.code === "Equal") {
         toggleDevMode();
         event.preventDefault();
@@ -948,7 +960,7 @@
   async function boot() {
     createPanel();
     createDevPanel();
-    createToggle();
+    //createToggle();
     hookHotkey();
     hookFetch();
     hookXHR();
