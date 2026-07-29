@@ -19,6 +19,30 @@
   const DB_STORE = "handles";
   const LAST_HANDLE_KEY = "lastPackHandle";
 
+  // Default Gim body replacements
+  const DEFAULT_GIMS = new Set([
+    "default_yellow",
+    "default_orange",
+    "default_lime",
+    "default_red",
+    "default_pink",
+    "default_maroon",
+    "default_lightyellow",
+    "default_lightpurple",
+    "default_lightpink",
+    "default_lightgreen",
+    "default_lightbrown",
+    "default_hotpink",
+    "default_grayblue",
+    "default_gray",
+    "default_darkpurple",
+    "default_darkgreen",
+    "default_darkblue",
+    "default_cyan",
+    "default_browngreen",
+    "default_graybrown",
+  ]);
+
   let enabled = true;
   let panelOpen = false;
   let devMode = false;
@@ -27,6 +51,8 @@
   const exactMap = new Map();
   // basename => blobUrl (fallback)
   const baseMap = new Map();
+  // special replacements (assets/all_replace/)
+  const globalReplaceMap = new Map();
   // for cleanup
   const objectUrls = new Set();
   const importedFiles = [];
@@ -123,6 +149,7 @@
     objectUrls.clear();
     exactMap.clear();
     baseMap.clear();
+    globalReplaceMap.clear();
     importedFiles.length = 0;
     packName = "No pack loaded";
     try {
@@ -158,6 +185,13 @@
         path: exact,
         url: objectUrl,
       });
+    }
+
+    // -----------------------------
+    // assets/all_replace support
+    // -----------------------------
+    if (exact.startsWith("assets/map/all_replace/")) {
+      globalReplaceMap.set(base, objectUrl);
     }
 
     importedFiles.push({
@@ -197,6 +231,40 @@
     // Exact path match first
     if (exact && exactMap.has(exact)) {
       return exactMap.get(exact);
+    }
+
+    // assets/all_replace rules
+    if (globalReplaceMap.size) {
+      if (
+        exact.includes("assets/map/characters/spine/preview/") &&
+        globalReplaceMap.has("playerPreview.png") &&
+        exact.endsWith(".png")
+      ) {
+        return globalReplaceMap.get("playerPreview.png")
+      }
+
+      if (
+        exact.includes("assets/map/characters/spine/") &&
+        !exact.includes("assets/map/characters/spine/preview/") &&
+        globalReplaceMap.has("player.png") &&
+        exact.endsWith(".png")
+      ) {
+        const file = getBasename(exact);
+
+        const match = file.match(/^(default_[^-\.]+)/i);
+
+        if (match && DEFAULT_GIMS.has(match[1].toLowerCase())) {
+            return globalReplaceMap.get("player.png");
+        }
+      }
+
+      if (
+        exact.includes("assets/map/trails/") &&
+        globalReplaceMap.has("trail.png") &&
+        exact.endsWith(".png")
+      ) {
+        return globalReplaceMap.get("trail.png");
+      }
     }
 
     // Only use basename if it is unique
